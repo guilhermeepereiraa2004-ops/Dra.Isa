@@ -1,0 +1,16 @@
+{
+  "name": "dr-isa-site",
+  "version": "1.0.0",
+  "description": "Site institucional para Dra. Isabelle Climaco",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serve": "^14.2.3"
+  }
+}

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo | Dra. Isabelle Climaco</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-green: #164233;
+            --accent-gold: #D4B064;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .bg-green {
+            background-color: var(--primary-green);
+        }
+
+        .text-green {
+            color: var(--primary-green);
+        }
+
+        .text-gold {
+            color: var(--accent-gold);
+        }
+
+        .border-gold {
+            border-color: var(--accent-gold);
+        }
+
+        .btn-gold {
+            background-color: var(--accent-gold);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gold:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent-gold);
+            color: white;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-gold);
+        }
+
+        .calendar-day.active {
+            background-color: rgba(212, 176, 100, 0.15) !important;
+            border: 2px solid var(--accent-gold) !important;
+            z-index: 10;
+        }
+
+        .calendar-day.has-task {
+            background-color: rgba(22, 66, 51, 0.03);
+            border-bottom: 2px solid var(--primary-green);
+        }
+
+        .task-badge {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 99px;
+            font-size: 8px;
+            font-weight: 800;
+            display: inline-block;
+        }
+
+        /* Status Colors */
+        .status-pendente {
+            background-color: rgba(212, 176, 100, 0.1);
+            color: var(--accent-gold);
+        }
+
+        .status-contatado {
+            background-color: #f0f7ff;
+            color: #2563eb;
+        }
+
+        .status-convertido {
+            background-color: rgba(22, 66, 51, 0.1);
+            color: var(--primary-green);
+        }
+
+        .status-perdido {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-default {
+            background-color: #f9fafb;
+            color: #4b5563;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+
+    <!-- Login Card -->
+    <div id="loginCard" class="bg-white p-10 rounded-sm shadow-2xl w-full max-w-md border-t-4 border-gold">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl text-green serif font-bold mb-2">Acesso Restrito</h1>
+            <p class="text-gray-500 text-xs uppercase tracking-widest">Painel Administrativo</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-green mb-2">E-mail</label>
+                <input type="email" id="email" required
+                    class="w-full p-4 bg-gray-50 border border-gray-100 outline-none focus:border-gold transition-colors text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-green mb-2">Senha</label>
+                <input type="password" id="password" required
+                    class="w-full p-4 bg-gray-50 border border-gray-100 outline-none focus:border-gold transition-colors text-sm">
+            </div>
+            <button type="submit"
+                class="w-full btn-gold py-4 font-bold uppercase tracking-widest text-xs shadow-lg">Entrar no
+                Painel</button>
+            <div class="text-center pt-4">
+                <a href="index.html"
+                    class="text-[10px] uppercase font-bold tracking-widest text-gray-400 hover:text-gold transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-left" size="12"></i> Voltar ao Site
+                </a>
+            </div>
+            <p id="errorMsg" class="text-red-500 text-[10px] text-center uppercase tracking-widest hidden">Credenciais
+                inválidas</p>
+        </form>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminPanel" class="hidden w-full h-screen flex overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-green text-white flex flex-col shadow-2xl z-20">
+            <div class="p-8 border-b border-white/10 text-center">
+                <div class="text-xl font-bold tracking-widest serif">
+                    ISABELLE <span class="text-gold italic">CLIMACO</span>
+                </div>
+            </div>
+            <nav class="flex-1 py-8 px-4 space-y-2">
+                <button onclick="switchTab('clientes')" id="nav-clientes"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all hover:bg-white/10">
+                    <i data-lucide="users" size="18"></i> Clientes
+                </button>
+                <button onclick="switchTab('leads')" id="nav-leads"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all hover:bg-white/10">
+                    <i data-lucide="user-plus" size="18"></i> Leads
+                </button>
+                <button onclick="switchTab('agenda')" id="nav-agenda"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all hover:bg-white/10">
+                    <i data-lucide="calendar" size="18"></i> Minhas Agendas
+                </button>
+                <button onclick="switchTab('tarefas')" id="nav-tarefas"
+                    class="nav-item w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-widest font-bold rounded-sm transition-all hover:bg-white/10">
+                    <i data-lucide="check-square" size="18"></i> Minhas Tarefas
+                </button>
+                <div class="pt-4 mt-4 border-t border-white/5">
+                    <a href="index.html"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-[10px] uppercase tracking-widest font-bold text-gray-400 hover:text-white transition-all">
+                        <i data-lucide="external-link" size="14"></i> Site Principal
+                    </a>
+                </div>
+            </nav>
+            <div class="p-6 border-t border-white/10">
+                <button onclick="logout()"
+                    class="w-full text-xs uppercase tracking-widest text-gray-400 hover:text-gold transition-colors flex items-center justify-center gap-2">
+                    Sair <i data-lucide="log-out" size="14"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
+            <header class="bg-white px-10 py-6 border-b border-gray-100 flex justify-between items-center">
+                <h2 id="tabTitle" class="text-2xl text-green serif font-bold capitalize">Clientes</h2>
+                <div class="flex items-center gap-4">
+                    <span class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Dra. Isabelle</span>
+                    <div class="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
+                        <i data-lucide="user" size="20"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-10 flex-1 overflow-y-auto">
+                <!-- Seção Clientes -->
+                <div id="section-clientes" class="tab-content">
+                    <div class="flex justify-between items-center mb-8">
+                        <p class="text-xs text-gray-500 uppercase tracking-widest">Base de clientes cadastrados</p>
+                        <button onclick="openModal('clienteModal')"
+                            class="btn-gold px-6 py-2 text-[10px] uppercase font-bold tracking-widest rounded-sm">Adicionar
+                            Cliente</button>
+                    </div>
+
+                    <div id="clientsTableContainer" class="hidden">
+                        <div class="bg-white rounded-sm shadow-sm overflow-hidden border border-gray-100">
+                            <table class="w-full text-left text-sm">
+                                <thead
+                                    class="bg-gray-50 border-b border-gray-100 text-green font-bold text-xs uppercase tracking-widest">
+                                    <tr>
+                                        <th class="px-6 py-4">Nome</th>
+                                        <th class="px-6 py-4">CPF/CNPJ</th>
+                                        <th class="px-6 py-4">Área/Processo</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientsList" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="clientsEmptyState"
+                        class="bg-white rounded-sm shadow-sm border border-gray-100 p-20 text-center">
+                        <div class="text-gray-200 mb-6 flex justify-center"><i data-lucide="users" size="64"></i></div>
+                        <h3 class="text-green serif text-xl font-bold mb-2">Nenhum cliente cadastrado</h3>
+                        <p class="text-gray-400 text-sm max-w-xs mx-auto">Comece a organizar sua base de clientes
+                            clicando no botão de cadastro acima.</p>
+                    </div>
+                </div>
+
+                <!-- Seção Leads -->
+                <div id="section-leads" class="tab-content hidden">
+                    <p class="text-xs text-gray-500 uppercase tracking-widest mb-8">Contatos recebidos via site</p>
+
+                    <div id="leadsTableContainer" class="hidden">
+                        <div class="bg-white rounded-sm shadow-sm overflow-hidden border border-gray-100">
+                            <table class="w-full text-left text-sm">
+                                <thead
+                                    class="bg-gray-50 border-b border-gray-100 text-green font-bold text-xs uppercase tracking-widest">
+                                    <tr>
+                                        <th class="px-6 py-4">Data</th>
+                                        <th class="px-6 py-4">Nome</th>
+                                        <th class="px-6 py-4">Contato</th>
+                                        <th class="px-6 py-4">Mensagem</th>
+                                        <th class="px-6 py-4">Status</th>
+                                        <th class="px-6 py-4">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsList" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="leadsEmptyState"
+                        class="bg-white rounded-sm shadow-sm border border-gray-100 p-20 text-center">
+                        <div class="text-gray-200 mb-6 flex justify-center"><i data-lucide="inbox" size="64"></i></div>
+                        <h3 class="text-green serif text-xl font-bold mb-2">Sem novos leads no momento</h3>
+                        <p class="text-gray-400 text-sm">Todas as mensagens do site aparecerão aqui assim que enviadas.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Seção Agenda -->
+                <div id="section-agenda" class="tab-content hidden">
+                    <div class="grid md:grid-cols-4 gap-8 h-full">
+                        <div class="md:col-span-3 bg-white p-6 rounded-sm shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-center mb-8">
+                                <h3 id="currentMonthYear" class="text-green serif text-xl font-bold">Março 2026</h3>
+                                <div class="flex gap-2">
+                                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 rounded-sm"><i
+                                            data-lucide="chevron-left" size="18"></i></button>
+                                    <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 rounded-sm"><i
+                                            data-lucide="chevron-right" size="18"></i></button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-7 gap-px bg-gray-100 text-center">
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Dom</div>
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Seg</div>
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Ter</div>
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Qua</div>
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Qui</div>
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Sex</div>
+                                <div
+                                    class="bg-gray-50 py-3 text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+                                    Sáb</div>
+                            </div>
+                            <div id="calendarDays" class="grid grid-cols-7 gap-px bg-gray-100 text-center"></div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-white p-6 rounded-sm shadow-sm border border-gray-100">
+                                <h4 id="todayDateTitle"
+                                    class="text-xs uppercase font-bold tracking-widest text-green mb-4 text-center">
+                                    Agenda do Dia</h4>
+                                <div id="todayTaskList" class="space-y-4 max-h-[400px] overflow-y-auto">
+                                    <div class="py-10 text-center border-b border-gray-50 mb-6">
+                                        <p class="text-gray-300 text-[10px] uppercase font-bold tracking-widest">Sem
+                                            tarefas</p>
+                                    </div>
+                                </div>
+                                <button onclick="openModal('taskModal')"
+                                    class="w-full mt-4 py-3 border-2 border-dashed border-gray-100 text-gray-400 text-[10px] uppercase font-bold hover:border-gold hover:text-gold transition-all">+
+                                    Nova Tarefa</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção Minhas Tarefas (To-Do) -->
+                <div id="section-tarefas" class="tab-content hidden">
+                    <div class="max-w-2xl mx-auto space-y-8">
+                        <div class="bg-white p-8 rounded-sm shadow-sm border-t-4 border-gold">
+                            <h3 class="text-green serif text-xl font-bold mb-6">Lista de Tarefas</h3>
+                            <form id="todoForm" class="flex gap-2">
+                                <input type="text" id="todoInput" required placeholder="O que precisa ser feito hoje?"
+                                    class="flex-1 p-4 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm shadow-inner transition-all">
+                                <button type="submit"
+                                    class="btn-gold px-8 font-bold uppercase tracking-widest text-[10px] shadow-lg">Adicionar</button>
+                            </form>
+                        </div>
+
+                        <div id="todoList" class="space-y-3">
+                            <!-- Tarefas aparecerão aqui -->
+                        </div>
+
+                        <div id="todoEmptyState"
+                            class="hidden text-center py-20 bg-white rounded-sm border border-dashed border-gray-200">
+                            <div class="text-gray-200 mb-4 flex justify-center">
+                                <i data-lucide="clipboard-check" size="48"></i>
+                            </div>
+                            <p class="text-gray-400 text-sm font-semibold italic">Parabéns! Tudo em ordem por aqui.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Adicionar Cliente -->
+    <div id="clienteModal"
+        class="hidden fixed inset-0 bg-green/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-gray-800">
+        <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 class="text-2xl text-green serif font-bold">Novo Cliente</h2>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400 text-left">Cadastro de
+                        informações pessoais</p>
+                </div>
+                <button onclick="closeModal('clienteModal')" class="text-gray-400 hover:text-gold transition-colors"><i
+                        data-lucide="x" size="24"></i></button>
+            </div>
+            <form id="addClientForm" class="p-8 overflow-y-auto space-y-8">
+                <div class="space-y-4">
+                    <h3
+                        class="text-xs uppercase font-bold tracking-[0.2em] text-gold border-b border-gold/20 pb-2 mb-6 text-left">
+                        Informações Pessoais</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2 text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Nome
+                                Completo</label>
+                            <input type="text" id="clientName" required
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label
+                                class="block text-[10px] font-bold uppercase tracking-widest text-green">CPF/CNPJ</label>
+                            <input type="text" id="clientDoc" required placeholder="000.000.000-00" maxlength="18"
+                                oninput="maskDoc(this)"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label
+                                class="block text-[10px] font-bold uppercase tracking-widest text-green">E-mail</label>
+                            <input type="email" id="clientEmail" placeholder="contato@email.com"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label
+                                class="block text-[10px] font-bold uppercase tracking-widest text-green">WhatsApp/Telefone</label>
+                            <input type="text" id="clientPhone" placeholder="(00) 00000-0000" maxlength="15"
+                                oninput="maskPhone(this)"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h3
+                        class="text-xs uppercase font-bold tracking-[0.2em] text-gold border-b border-gold/20 pb-2 mb-6 text-left">
+                        Informações Jurídicas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2 text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Área de
+                                Atuação</label>
+                            <select id="clientArea"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm appearance-none">
+                                <option value="Previdenciário">Direito Previdenciário</option>
+                                <option value="Trabalhista">Direito Trabalhista</option>
+                                <option value="Cível">Direito Cível / Contratos</option>
+                                <option value="Família">Direito de Família</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Número do
+                                Processo (Opcional)</label>
+                            <input type="text" id="clientProcess"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-left">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Observações
+                            Importantes</label>
+                        <textarea id="clientNotes" rows="3"
+                            class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm"></textarea>
+                    </div>
+                </div>
+                <div class="pt-4 flex gap-4">
+                    <button type="submit"
+                        class="flex-1 btn-gold py-4 font-bold uppercase tracking-widest text-xs shadow-lg">Cadastrar
+                        Cliente</button>
+                    <button type="button" onclick="closeModal('clienteModal')"
+                        class="px-8 py-4 text-[10px] uppercase font-bold tracking-widest text-gray-400 hover:text-green border border-gray-100 transition-all">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Visualizar Agenda do Dia -->
+    <div id="viewAgendaModal"
+        class="hidden fixed inset-0 bg-green/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-gray-800">
+        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 class="text-2xl text-green serif font-bold" id="modalDateTitle">Agenda do Dia</h2>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400 text-left">Resumo de
+                        compromissos agendados</p>
+                </div>
+                <button onclick="closeModal('viewAgendaModal')"
+                    class="text-gray-400 hover:text-gold transition-colors"><i data-lucide="x" size="24"></i></button>
+            </div>
+            <div id="modalTaskList" class="p-8 overflow-y-auto space-y-4">
+                <!-- Conteúdo dinâmico -->
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                <button onclick="closeModal('viewAgendaModal'); openModal('taskModal');"
+                    class="btn-gold px-6 py-3 text-[10px] uppercase font-bold tracking-widest rounded-sm flex items-center gap-2">
+                    <i data-lucide="plus" size="14"></i> Adicionar Nova
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="taskModal"
+        class="hidden fixed inset-0 bg-green/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-gray-800">
+        <div class="bg-white w-full max-w-lg rounded-sm shadow-2xl flex flex-col">
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 class="text-2xl text-green serif font-bold">Nova Tarefa</h2>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400 text-left">Agendamento de
+                        compromissos</p>
+                </div>
+                <button onclick="closeModal('taskModal')" class="text-gray-400 hover:text-gold transition-colors"><i
+                        data-lucide="x" size="24"></i></button>
+            </div>
+            <form id="addTaskForm" class="p-8 space-y-6">
+                <div class="space-y-2 text-left">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Descrição da
+                        Tarefa</label>
+                    <input type="text" id="taskDesc" required placeholder="Ex: Audiência, Reunião, Prazo..."
+                        class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2 text-left">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Data</label>
+                        <input type="date" id="taskDate" required
+                            class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                    </div>
+                    <div class="space-y-2 text-left">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Hora</label>
+                        <input type="time" id="taskTime" required
+                            class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                    </div>
+                </div>
+                <div class="space-y-2 text-left">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Local / Link</label>
+                    <input type="text" id="taskLocation" placeholder="Fórum, Google Meet, Escritório..."
+                        class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                </div>
+                <div class="pt-4 flex gap-4">
+                    <button type="submit"
+                        class="flex-1 btn-gold py-4 font-bold uppercase tracking-widest text-xs shadow-lg">Agendar
+                        Tarefa</button>
+                    <button type="button" onclick="closeModal('taskModal')"
+                        class="px-8 py-4 text-[10px] uppercase font-bold tracking-widest text-gray-400 hover:text-green border border-gray-100 transition-all">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const loginForm = document.getElementById('loginForm');
+        const loginCard = document.getElementById('loginCard');
+        const adminPanel = document.getElementById('adminPanel');
+        const errorMsg = document.getElementById('errorMsg');
+        const addClientForm = document.getElementById('addClientForm');
+        const addTaskForm = document.getElementById('addTaskForm');
+
+        let clients = JSON.parse(localStorage.getItem('dra_isa_clients') || '[]');
+        let tasks = JSON.parse(localStorage.getItem('dra_isa_tasks') || '[]');
+        let todos = JSON.parse(localStorage.getItem('dra_isa_todos') || '[]');
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selectedDateStr = new Date().toISOString().split('T')[0];
+
+        if (localStorage.getItem('dra_isa_logged_in') === 'true') showDashboard();
+
+        // TODO Form logic
+        const todoForm = document.getElementById('todoForm');
+        todoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('todoInput');
+            const newTodo = {
+                id: Date.now(),
+                text: input.value,
+                completed: false
+            };
+            todos.unshift(newTodo);
+            localStorage.setItem('dra_isa_todos', JSON.stringify(todos));
+            input.value = '';
+            renderTodos();
+        });
+
+        function renderTodos() {
+            const list = document.getElementById('todoList');
+            const empty = document.getElementById('todoEmptyState');
+
+            if (todos.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                list.innerHTML = todos.map(todo => `
+                    <div class="flex items-center gap-4 p-5 bg-white border border-gray-100 rounded-sm group transition-all hover:border-gold/30 ${todo.completed ? 'opacity-50' : ''}">
+                        <button onclick="toggleTodo(${todo.id})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${todo.completed ? 'bg-green border-green text-white' : 'border-gray-200 hover:border-gold'}">
+                            ${todo.completed ? '<i data-lucide="check" size="14"></i>' : ''}
+                        </button>
+                        <span class="flex-1 text-sm font-semibold transition-all ${todo.completed ? 'line-through text-gray-400' : 'text-green'}">
+                            ${todo.text}
+                        </span>
+                        <button onclick="deleteTodo(${todo.id})" class="text-gray-300 hover:text-red-500 transition-colors p-2 opacity-0 group-hover:opacity-100">
+                            <i data-lucide="trash-2" size="16"></i>
+                        </button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        function toggleTodo(id) {
+            todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+            localStorage.setItem('dra_isa_todos', JSON.stringify(todos));
+            renderTodos();
+        }
+
+        function deleteTodo(id) {
+            todos = todos.filter(t => t.id !== id);
+            localStorage.setItem('dra_isa_todos', JSON.stringify(todos));
+            renderTodos();
+        }
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (email === 'draisa@gmail.com' && password === '123456') {
+                localStorage.setItem('dra_isa_logged_in', 'true');
+                showDashboard();
+            } else {
+                errorMsg.classList.remove('hidden');
+                setTimeout(() => errorMsg.classList.add('hidden'), 3000);
+            }
+        });
+
+        addClientForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newClient = {
+                id: Date.now(),
+                name: document.getElementById('clientName').value,
+                doc: document.getElementById('clientDoc').value,
+                email: document.getElementById('clientEmail').value,
+                phone: document.getElementById('clientPhone').value,
+                area: document.getElementById('clientArea').value,
+                process: document.getElementById('clientProcess').value || 'Não informado',
+                status: 'Ativo'
+            };
+            clients.push(newClient);
+            localStorage.setItem('dra_isa_clients', JSON.stringify(clients));
+            renderClients();
+            closeModal('clienteModal');
+            addClientForm.reset();
+        });
+
+        addTaskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now(),
+                desc: document.getElementById('taskDesc').value,
+                date: document.getElementById('taskDate').value,
+                time: document.getElementById('taskTime').value,
+                location: document.getElementById('taskLocation').value || 'Não informado'
+            };
+            tasks.push(newTask);
+            localStorage.setItem('dra_isa_tasks', JSON.stringify(tasks));
+            renderCalendar();
+            renderTodayTasks(newTask.date);
+            closeModal('taskModal');
+            addTaskForm.reset();
+        });
+
+        function renderClients() {
+            const list = document.getElementById('clientsList');
+            const emptyState = document.getElementById('clientsEmptyState');
+            const tableContainer = document.getElementById('clientsTableContainer');
+            if (clients.length === 0) {
+                emptyState.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                list.innerHTML = clients.map(client => `
+                    <tr class="hover:bg-gray-50/50">
+                        <td class="px-6 py-4 font-semibold text-green">${client.name}</td>
+                        <td class="px-6 py-4 text-xs text-gray-500">${client.doc}</td>
+                        <td class="px-6 py-4 text-xs font-bold text-green">${client.area}<br><span class="text-gray-400 font-normal">${client.process}</span></td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 bg-green/10 text-green text-[10px] font-bold uppercase">Ativo</span></td>
+                        <td class="px-6 py-4"><button onclick="deleteClient(${client.id})" class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" size="16"></i></button></td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        function deleteClient(id) { if (confirm('Excluir cliente?')) { clients = clients.filter(c => c.id !== id); localStorage.setItem('dra_isa_clients', JSON.stringify(clients)); renderClients(); } }
+
+        function renderCalendar() {
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('currentMonthYear').innerText = `${monthNames[currentMonth]} ${currentYear}`;
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const calendarDays = document.getElementById('calendarDays');
+            calendarDays.innerHTML = '';
+            for (let i = 0; i < firstDay; i++) calendarDays.innerHTML += '<div class="bg-gray-50 h-24 border-b border-r border-gray-100"></div>';
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dailyTasks = tasks.filter(t => t.date === dateStr);
+                const isActive = dateStr === selectedDateStr ? 'active' : '';
+                const hasTask = dailyTasks.length > 0 ? 'has-task' : '';
+
+                calendarDays.innerHTML += `
+                    <div onclick="selectDate('${dateStr}')" class="bg-white h-28 p-3 cursor-pointer hover:bg-gold/10 transition-all border-b border-r border-gray-100 flex flex-col items-start relative calendar-day ${isActive} ${hasTask}">
+                        <div class="flex justify-between w-full items-start">
+                            <span class="${isActive ? 'text-gold font-bold scale-110' : 'text-gray-700'} text-xs transition-transform">${day}</span>
+                            ${dailyTasks.length > 0 ? `<span class="task-badge shadow-sm">TAREFAS: ${dailyTasks.length}</span>` : ''}
+                        </div>
+                        <div class="mt-2 w-full space-y-1 overflow-hidden flex-1">
+                            ${dailyTasks.slice(0, 3).map(t => `
+                                <div class="p-1 bg-green text-white text-[7px] truncate rounded-[2px] font-semibold flex items-center gap-1 shadow-sm">
+                                    <i data-lucide="clock" size="6"></i> ${t.time} ${t.desc}
+                                </div>
+                            `).join('')}
+                            ${dailyTasks.length > 3 ? `<div class="text-[7px] text-green font-bold text-center mt-1 uppercase tracking-tighter">+ ${dailyTasks.length - 3} itens</div>` : ''}
+                        </div>
+                    </div>`;
+            }
+            lucide.createIcons();
+        }
+
+        function selectDate(dateStr) {
+            selectedDateStr = dateStr;
+            renderCalendar();
+            renderTodayTasks(dateStr);
+
+            // Show Modal with detailed agenda
+            const dailyTasks = tasks.filter(t => t.date === dateStr);
+            const list = document.getElementById('modalTaskList');
+            const title = document.getElementById('modalDateTitle');
+
+            title.innerText = `Agenda: ${dateStr.split('-').reverse().join('/')}`;
+
+            if (dailyTasks.length === 0) {
+                list.innerHTML = `
+                    <div class="py-12 text-center text-gray-400">
+                        <i data-lucide="calendar-off" size="48" class="mx-auto mb-4 opacity-20"></i>
+                        <p class="text-sm font-semibold">Nenhum compromisso para este dia.</p>
+                    </div>`;
+            } else {
+                list.innerHTML = dailyTasks.sort((a, b) => a.time.localeCompare(b.time)).map(t => `
+                    <div class="p-5 bg-gray-50/50 border border-gray-100 rounded-sm flex items-start gap-4 group transition-all hover:border-gold/30">
+                        <div class="w-10 h-10 bg-gold/10 text-gold flex items-center justify-center rounded-sm shrink-0">
+                            <i data-lucide="clock" size="18"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-green text-lg leading-tight mb-1">${t.desc}</h4>
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 uppercase tracking-widest font-semibold">
+                                <span class="flex items-center gap-1 text-gold"><i data-lucide="clock" size="12"></i> ${t.time}</span>
+                                <span class="flex items-center gap-1"><i data-lucide="map-pin" size="12"></i> ${t.location}</span>
+                            </div>
+                        </div>
+                        <button onclick="deleteTask(${t.id}); closeModal('viewAgendaModal');" class="text-gray-300 hover:text-red-500 transition-colors p-2">
+                            <i data-lucide="trash-2" size="16"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            openModal('viewAgendaModal');
+            lucide.createIcons();
+        }
+        function changeMonth(dir) { currentMonth += dir; if (currentMonth < 0) { currentMonth = 11; currentYear--; } else if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
+
+        function renderTodayTasks(dateStr) {
+            document.getElementById('todayDateTitle').innerText = `Agenda: ${dateStr.split('-').reverse().join('/')}`;
+            const list = document.getElementById('todayTaskList');
+            const dailyTasks = tasks.filter(t => t.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
+            if (dailyTasks.length === 0) list.innerHTML = '<div class="py-10 text-center text-gray-300 text-[10px] uppercase font-bold">Sem compromissos</div>';
+            else list.innerHTML = dailyTasks.map(t => `
+                <div class="flex items-start gap-3 p-2 bg-white border border-gray-100 rounded-sm">
+                    <div class="w-1.5 h-1.5 rounded-full bg-gold mt-1.5"></div>
+                    <div class="flex-1">
+                        <p class="text-xs font-bold text-green">${t.desc}</p>
+                        <p class="text-[9px] text-gray-500">${t.time} • ${t.location}</p>
+                    </div>
+                    <button onclick="deleteTask(${t.id})" class="text-gray-300 hover:text-red-500"><i data-lucide="x" size="12"></i></button>
+                </div>`).join('');
+            lucide.createIcons();
+        }
+
+        function deleteTask(id) { tasks = tasks.filter(t => t.id !== id); localStorage.setItem('dra_isa_tasks', JSON.stringify(tasks)); renderCalendar(); renderTodayTasks(selectedDateStr); }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('section-' + tab).classList.remove('hidden');
+            document.getElementById('nav-' + tab).classList.add('active');
+            const titles = { 'clientes': 'Dados de Clientes', 'leads': 'Leads do Site', 'agenda': 'Minhas Agendas', 'tarefas': 'Lista de Tarefas (To-Do)' };
+            document.getElementById('tabTitle').innerText = titles[tab];
+            if (tab === 'clientes') renderClients();
+            if (tab === 'leads') renderLeads();
+            if (tab === 'agenda') { renderCalendar(); renderTodayTasks(selectedDateStr); }
+            if (tab === 'tarefas') renderTodos();
+            lucide.createIcons();
+        }
+
+        function renderLeads() {
+            const leads = JSON.parse(localStorage.getItem('dra_isa_leads') || '[]');
+            const list = document.getElementById('leadsList');
+            const emptyState = document.getElementById('leadsEmptyState');
+            const tableContainer = document.getElementById('leadsTableContainer');
+
+            if (leads.length === 0) {
+                emptyState.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                list.innerHTML = leads.map(lead => `
+                    <tr class="hover:bg-gray-50/50">
+                        <td class="px-6 py-4 text-xs font-bold text-gray-400">${lead.date}</td>
+                        <td class="px-6 py-4 font-semibold text-green">${lead.name}</td>
+                        <td class="px-6 py-4 text-xs">
+                            <p class="font-bold text-green">${lead.phone}</p>
+                            <p class="text-gray-400">${lead.email}</p>
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-500 max-w-xs truncate">${lead.message}</td>
+                        <td class="px-6 py-4">
+                            <select onchange="updateLeadStatus(${lead.id}, this.value)" 
+                                class="text-[10px] uppercase font-bold px-2 py-1 rounded-sm border-0 outline-none cursor-pointer ${getStatusStyles(lead.status)}">
+                                <option value="Pendente" ${lead.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                                <option value="Contatado" ${lead.status === 'Contatado' ? 'selected' : ''}>Contatado</option>
+                                <option value="Convertido" ${lead.status === 'Convertido' ? 'selected' : ''}>Convertido</option>
+                                <option value="Perdido" ${lead.status === 'Perdido' ? 'selected' : ''}>Perdido</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick="deleteLead(${lead.id})" class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" size="16"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        function deleteLead(id) {
+            if (confirm('Excluir este lead?')) {
+                let leads = JSON.parse(localStorage.getItem('dra_isa_leads') || '[]');
+                leads = leads.filter(l => l.id !== id);
+                localStorage.setItem('dra_isa_leads', JSON.stringify(leads));
+                renderLeads();
+            }
+        }
+
+        function updateLeadStatus(id, newStatus) {
+            let leads = JSON.parse(localStorage.getItem('dra_isa_leads') || '[]');
+            leads = leads.map(l => l.id === id ? { ...l, status: newStatus } : l);
+            localStorage.setItem('dra_isa_leads', JSON.stringify(leads));
+            renderLeads();
+        }
+
+        function getStatusStyles(status) {
+            switch (status) {
+                case 'Pendente': return 'status-pendente';
+                case 'Contatado': return 'status-contatado';
+                case 'Convertido': return 'status-convertido';
+                case 'Perdido': return 'status-perdido';
+                default: return 'status-default';
+            }
+        }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function showDashboard() { loginCard.classList.add('hidden'); adminPanel.classList.remove('hidden'); document.body.classList.remove('flex', 'items-center', 'justify-center'); switchTab('clientes'); }
+        function logout() { localStorage.removeItem('dra_isa_logged_in'); window.location.reload(); }
+
+        function maskDoc(i) {
+            let v = i.value.replace(/\D/g, "");
+            if (v.length <= 11) { v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d)/, "$1.$2"); v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2"); }
+            else { v = v.replace(/^(\d{2})(\d)/, "$1.$2"); v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3"); v = v.replace(/\.(\d{3})(\d)/, ".$1/$2"); v = v.replace(/(\d{4})(\d)/, "$1-$2"); }
+            i.value = v;
+        }
+        function maskPhone(i) { let v = i.value.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); v = v.replace(/(\d)(\d{4})$/, "$1-$2"); i.value = v; }
+    </script>
+</body>
+
+</html>
