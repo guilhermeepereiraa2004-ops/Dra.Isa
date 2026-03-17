@@ -298,6 +298,12 @@
 
     <nav class="fixed w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 nav-animate">
         <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+            <!-- Mobile Menu Toggle -->
+            <button id="mobileMenuToggle" class="md:hidden text-green focus:outline-none">
+                <i data-lucide="menu" id="menuIcon"></i>
+                <i data-lucide="x" id="closeIcon" class="hidden"></i>
+            </button>
+
             <div class="hidden md:flex space-x-8 text-xs uppercase tracking-widest font-semibold">
                 <a href="#inicio" class="text-green hover:text-gold transition-colors duration-300">Início</a>
                 <a href="#sobre" class="text-green hover:text-gold transition-colors duration-300">Sobre</a>
@@ -309,20 +315,30 @@
                 </a>
             </div>
             <a href="https://wa.me/5573981298102"
-                class="btn-gold px-6 py-2 rounded-sm text-[10px] uppercase tracking-[0.2em] font-bold">
+                class="btn-gold px-4 md:px-6 py-2 rounded-sm text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold">
                 Agendar Consulta
             </a>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="hidden md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 py-6 px-6 space-y-4 shadow-xl">
+            <a href="#inicio" class="block text-green text-sm uppercase tracking-widest font-semibold mobile-link">Início</a>
+            <a href="#sobre" class="block text-green text-sm uppercase tracking-widest font-semibold mobile-link">Sobre</a>
+            <a href="#areas" class="block text-green text-sm uppercase tracking-widest font-semibold mobile-link">Atuação</a>
+            <a href="#blog" class="block text-green text-sm uppercase tracking-widest font-semibold mobile-link">Blog</a>
+            <a href="#contato" class="block text-green text-sm uppercase tracking-widest font-semibold mobile-link">Contato</a>
+            <a href="admin.html" class="block text-green text-sm uppercase tracking-widest font-semibold mobile-link">Admin</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section id="inicio" class="relative min-h-screen flex items-center pt-24 hero-pattern overflow-hidden">
-        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+    <section id="inicio" class="relative min-h-screen flex items-center pt-28 md:pt-24 hero-pattern overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center py-10 md:py-0">
             <div class="order-2 lg:order-1 space-y-8" data-aos="fade-right" data-aos-duration="1200">
                 <div class="space-y-2 relative">
                     <p class="text-gold uppercase tracking-[0.4em] text-xs font-bold" data-aos="fade-up"
                         data-aos-delay="200">Consultoria Jurídica Premium</p>
-                    <h1 class="text-6xl md:text-8xl leading-tight text-white">
+                    <h1 class="text-4xl md:text-8xl leading-tight text-white">
                         Dra. Isabelle <br><span class="italic font-bold">Climaco</span>
                     </h1>
                 </div>
@@ -360,7 +376,7 @@
     </section>
 
     <!-- Areas of Practice -->
-    <section id="areas" class="py-32 bg-white">
+    <section id="areas" class="py-20 md:py-32 bg-white">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-20 space-y-4" data-aos="fade-up">
                 <h2 class="text-4xl md:text-5xl text-green serif">Áreas de Atuação</h2>
@@ -442,7 +458,7 @@
     </section>
 
     <!-- Instagram / Blog Section -->
-    <section id="blog" class="py-32 bg-gray-50 overflow-hidden">
+    <section id="blog" class="py-20 md:py-32 bg-gray-50 overflow-hidden">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6" data-aos="fade-up">
                 <div class="space-y-4">
@@ -499,9 +515,9 @@
     </section>
 
     <!-- About Section -->
-    <section id="sobre" class="py-32 bg-green text-white relative overflow-hidden">
+    <section id="sobre" class="py-20 md:py-32 bg-green text-white relative overflow-hidden">
         <div class="absolute top-0 right-0 w-1/2 h-full bg-white/5 skew-x-[-20deg] transform translate-x-1/4"></div>
-        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-20 items-center">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-10 md:gap-20 items-center">
             <div class="space-y-8 relative z-10" data-aos="fade-right">
                 <h2 class="text-4xl md:text-5xl serif leading-tight">Uma trajetória de <span
                         class="text-gold italic">excelência</span> e ética.</h2>
@@ -525,7 +541,7 @@
     </section>
 
     <!-- Contact Section -->
-    <section id="contato" class="py-32 bg-white">
+    <section id="contato" class="py-20 md:py-32 bg-white">
         <div class="max-w-5xl mx-auto px-6">
             <div class="text-center mb-16 space-y-4" data-aos="fade-down">
                 <h2 class="text-4xl md:text-5xl text-green serif">Agende uma Consulta</h2>
@@ -689,6 +705,29 @@
                 toast.classList.remove('active');
             }, 5000);
         }
+
+        // Mobile Menu Logic
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+        const closeIcon = document.getElementById('closeIcon');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        function toggleMenu() {
+            mobileMenu.classList.toggle('hidden');
+            menuIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('hidden');
+        }
+
+        mobileMenuToggle.addEventListener('click', toggleMenu);
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (!mobileMenu.classList.contains('hidden')) {
+                    toggleMenu();
+                }
+            });
+        });
     </script>
 </body>
 

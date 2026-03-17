@@ -154,14 +154,21 @@
     </div>
 
     <!-- Admin Dashboard -->
-    <div id="adminPanel" class="hidden w-full h-screen flex overflow-hidden">
+    <div id="adminPanel" class="hidden w-full h-screen flex overflow-hidden relative">
+
+        <!-- Sidebar Overlay (Mobile) -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-green/50 backdrop-blur-sm z-30 hidden md:hidden"></div>
 
         <!-- Sidebar -->
-        <aside class="w-64 bg-green text-white flex flex-col shadow-2xl z-20">
-            <div class="p-8 border-b border-white/10 text-center">
+        <aside id="adminSidebar" class="fixed md:relative w-64 h-full bg-green text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 -translate-x-full md:translate-x-0">
+            <div class="p-8 border-b border-white/10 text-center relative">
                 <div class="text-xl font-bold tracking-widest serif">
                     ISABELLE <span class="text-gold italic">CLIMACO</span>
                 </div>
+                <!-- Close Button (Mobile) -->
+                <button id="closeSidebar" class="md:hidden absolute top-4 right-4 text-white hover:text-gold transition-colors">
+                    <i data-lucide="x" size="20"></i>
+                </button>
             </div>
             <nav class="flex-1 py-8 px-4 space-y-2">
                 <button onclick="switchTab('clientes')" id="nav-clientes"
@@ -196,18 +203,25 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
-            <header class="bg-white px-10 py-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 id="tabTitle" class="text-2xl text-green serif font-bold capitalize">Clientes</h2>
+        <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden w-full">
+            <header class="bg-white px-4 md:px-10 py-4 md:py-6 border-b border-gray-100 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <span class="text-[10px] uppercase font-bold tracking-widest text-gray-400">Dra. Isabelle</span>
-                    <div class="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                        <i data-lucide="user" size="20"></i>
+                    <!-- Menu Toggle (Mobile) -->
+                    <button id="openSidebar" class="md:hidden text-green hover:text-gold transition-colors">
+                        <i data-lucide="menu" size="24"></i>
+                    </button>
+                    <h2 id="tabTitle" class="text-lg md:text-2xl text-green serif font-bold capitalize">Clientes</h2>
+                </div>
+                <div class="flex items-center gap-3 md:gap-4">
+                    <span class="hidden sm:inline text-[8px] md:text-[10px] uppercase font-bold tracking-widest text-gray-400">Dra. Isabelle</span>
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
+                        <i data-lucide="user" size="16" class="md:hidden"></i>
+                        <i data-lucide="user" size="20" class="hidden md:block"></i>
                     </div>
                 </div>
             </header>
 
-            <div class="p-10 flex-1 overflow-y-auto">
+            <div class="p-4 md:p-10 flex-1 overflow-y-auto">
                 <!-- Seção Clientes -->
                 <div id="section-clientes" class="tab-content">
                     <div class="flex justify-between items-center mb-8">
@@ -218,8 +232,8 @@
                     </div>
 
                     <div id="clientsTableContainer" class="hidden">
-                        <div class="bg-white rounded-sm shadow-sm overflow-hidden border border-gray-100">
-                            <table class="w-full text-left text-sm">
+                        <div class="bg-white rounded-sm shadow-sm overflow-x-auto border border-gray-100">
+                            <table class="w-full text-left text-sm min-w-[600px] md:min-w-full">
                                 <thead
                                     class="bg-gray-50 border-b border-gray-100 text-green font-bold text-xs uppercase tracking-widest">
                                     <tr>
@@ -249,8 +263,8 @@
                     <p class="text-xs text-gray-500 uppercase tracking-widest mb-8">Contatos recebidos via site</p>
 
                     <div id="leadsTableContainer" class="hidden">
-                        <div class="bg-white rounded-sm shadow-sm overflow-hidden border border-gray-100">
-                            <table class="w-full text-left text-sm">
+                        <div class="bg-white rounded-sm shadow-sm overflow-x-auto border border-gray-100">
+                            <table class="w-full text-left text-sm min-w-[800px] md:min-w-full">
                                 <thead
                                     class="bg-gray-50 border-b border-gray-100 text-green font-bold text-xs uppercase tracking-widest">
                                     <tr>
@@ -541,6 +555,21 @@
 
         if (localStorage.getItem('dra_isa_logged_in') === 'true') showDashboard();
 
+        // Responsive Sidebar Toggle
+        const openSidebarBtn = document.getElementById('openSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+        const adminSidebar = document.getElementById('adminSidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            adminSidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        if (openSidebarBtn) openSidebarBtn.addEventListener('click', toggleSidebar);
+        if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleSidebar);
+        if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+
         // TODO Form logic
         const todoForm = document.getElementById('todoForm');
         todoForm.addEventListener('submit', (e) => {
@@ -775,6 +804,11 @@
             if (tab === 'agenda') { renderCalendar(); renderTodayTasks(selectedDateStr); }
             if (tab === 'tarefas') renderTodos();
             lucide.createIcons();
+
+            // Close sidebar on mobile after clicking a link
+            if (window.innerWidth < 768 && !adminSidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
         }
 
         function renderLeads() {
