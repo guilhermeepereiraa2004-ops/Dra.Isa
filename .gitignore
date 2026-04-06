@@ -1,6 +1,11 @@
-node_modules
-.vercel
-.env
+# Node.js
+node_modules/
 .DS_Store
-dist
-build
+*.log
+
+# Supabase Keys (Security)
+supabase-client.js
+supabase_schema.sql
+
+# Vercel
+.vercel

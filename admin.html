@@ -11,6 +11,12 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;600&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+    
+    <!-- Supabase Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase Configuration -->
+    <script src="supabase-client.js"></script>
     <style>
         :root {
             --primary-green: #164233;
@@ -115,6 +121,36 @@
         .status-default {
             background-color: #f9fafb;
             color: #4b5563;
+        }
+ 
+        /* Minimalist & Sophisticated Action Buttons */
+        .btn-action {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 99px;
+            background-color: transparent;
+            border: none;
+            color: #94a3b8;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+ 
+        .btn-view:hover {
+            background-color: #f1f5f9;
+            color: var(--accent-gold);
+        }
+ 
+        .btn-edit:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-green);
+        }
+ 
+        .btn-delete:hover {
+            background-color: #fef2f2;
+            color: #ef4444;
         }
     </style>
 </head>
@@ -240,6 +276,7 @@
                                         <th class="px-6 py-4">Nome</th>
                                         <th class="px-6 py-4">CPF/CNPJ</th>
                                         <th class="px-6 py-4">Área/Processo</th>
+                                        <th class="px-6 py-4">Valor/Pagto</th>
                                         <th class="px-6 py-4">Status</th>
                                         <th class="px-6 py-4">Ações</th>
                                     </tr>
@@ -391,6 +428,7 @@
                         data-lucide="x" size="24"></i></button>
             </div>
             <form id="addClientForm" class="p-8 overflow-y-auto space-y-8">
+                <input type="hidden" id="editingClientId">
                 <div class="space-y-4">
                     <h3
                         class="text-xs uppercase font-bold tracking-[0.2em] text-gold border-b border-gold/20 pb-2 mb-6 text-left">
@@ -399,14 +437,20 @@
                         <div class="space-y-2 text-left">
                             <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Nome
                                 Completo</label>
-                            <input type="text" id="clientName" required
+                            <input type="text" id="clientName"
                                 class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
                         </div>
                         <div class="space-y-2 text-left">
                             <label
                                 class="block text-[10px] font-bold uppercase tracking-widest text-green">CPF/CNPJ</label>
-                            <input type="text" id="clientDoc" required placeholder="000.000.000-00" maxlength="18"
+                            <input type="text" id="clientDoc" placeholder="000.000.000-00" maxlength="18"
                                 oninput="maskDoc(this)"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label
+                                class="block text-[10px] font-bold uppercase tracking-widest text-green">RG (Opcional)</label>
+                            <input type="text" id="clientRg" placeholder="00.000.000-0"
                                 class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
                         </div>
                         <div class="space-y-2 text-left">
@@ -434,11 +478,11 @@
                                 Atuação</label>
                             <select id="clientArea"
                                 class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm appearance-none">
-                                <option value="Previdenciário">Direito Previdenciário</option>
-                                <option value="Trabalhista">Direito Trabalhista</option>
-                                <option value="Cível">Direito Cível / Contratos</option>
-                                <option value="Família">Direito de Família</option>
-                                <option value="Outros">Outros</option>
+                                <option value="Direito Previdenciário">Direito Previdenciário</option>
+                                <option value="Direito Trabalhista">Direito Trabalhista</option>
+                                <option value="Direito Sucessório">Direito Sucessório</option>
+                                <option value="Direito de Família">Direito de Família</option>
+                                <option value="Direito do Consumidor">Direito do Consumidor</option>
                             </select>
                         </div>
                         <div class="space-y-2 text-left">
@@ -446,6 +490,49 @@
                                 Processo (Opcional)</label>
                             <input type="text" id="clientProcess"
                                 class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3
+                        class="text-xs uppercase font-bold tracking-[0.2em] text-gold border-b border-gold/20 pb-2 mb-6 text-left">
+                        Informações Financeiras</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2 text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Valor do Contrato (R$)</label>
+                            <input type="text" id="clientValue" placeholder="0.000,00"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm">
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Forma de Pagamento</label>
+                            <select id="clientPaymentMethod"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm appearance-none">
+                                <option value="Pix">Pix</option>
+                                <option value="Boleto">Boleto</option>
+                                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                <option value="Cartão de Débito">Cartão de Débito</option>
+                                <option value="Transferência (TED/DOC)">Transferência (TED/DOC)</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2 text-left">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Tipo de Pagamento</label>
+                            <select id="clientPaymentType" onchange="toggleInstallmentField(this.value)"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm appearance-none">
+                                <option value="À vista">À vista</option>
+                                <option value="Parcelado">Parcelado</option>
+                            </select>
+                        </div>
+                        <div id="installmentContainer" class="space-y-2 text-left hidden">
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-green">Entrada / Parcelamento (%)</label>
+                            <select id="clientInstallmentPercent"
+                                class="w-full p-3 bg-gray-50 border border-gray-100 outline-none focus:border-gold text-sm appearance-none">
+                                <option value="20%">20%</option>
+                                <option value="40%">40%</option>
+                                <option value="50%">50%</option>
+                                <option value="70%">70%</option>
+                            </select>
                         </div>
                     </div>
                     <div class="space-y-2 text-left">
@@ -537,6 +624,28 @@
         </div>
     </div>
 
+    <!-- Modal Visualizar Cliente (Full Info) -->
+    <div id="viewClienteModal"
+        class="hidden fixed inset-0 bg-green/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-gray-800">
+        <div class="bg-white w-full max-w-2xl rounded-sm shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h2 class="text-2xl text-green serif font-bold">Ficha do Cliente</h2>
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400 text-left">Informações completas do cadastro</p>
+                </div>
+                <button onclick="closeModal('viewClienteModal')" class="text-gray-400 hover:text-gold transition-colors"><i
+                        data-lucide="x" size="24"></i></button>
+            </div>
+            <div id="viewClienteDetail" class="p-8 overflow-y-auto space-y-8 text-left">
+                <!-- Info will be injected here -->
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                <button onclick="closeModal('viewClienteModal')"
+                    class="btn-gold px-8 py-3 text-[10px] uppercase font-bold tracking-widest rounded-sm">Fechar</button>
+            </div>
+        </div>
+    </div>
+ 
     <script>
         lucide.createIcons();
         const loginForm = document.getElementById('loginForm');
@@ -546,14 +655,37 @@
         const addClientForm = document.getElementById('addClientForm');
         const addTaskForm = document.getElementById('addTaskForm');
 
-        let clients = JSON.parse(localStorage.getItem('dra_isa_clients') || '[]');
-        let tasks = JSON.parse(localStorage.getItem('dra_isa_tasks') || '[]');
-        let todos = JSON.parse(localStorage.getItem('dra_isa_todos') || '[]');
+        let clients = [];
+        let tasks = [];
+        let todos = [];
         let currentMonth = new Date().getMonth();
         let currentYear = new Date().getFullYear();
         let selectedDateStr = new Date().toISOString().split('T')[0];
 
-        if (localStorage.getItem('dra_isa_logged_in') === 'true') showDashboard();
+        // Fetch Initial Data from Supabase
+        async function fetchAllData() {
+            if (window.supabaseClient) {
+                const { data: clientsData } = await window.supabaseClient.from('clients').select('*');
+                const { data: tasksData } = await window.supabaseClient.from('tasks').select('*');
+                const { data: todosData } = await window.supabaseClient.from('todos').select('*');
+                
+                clients = clientsData || [];
+                tasks = tasksData || [];
+                todos = todosData || [];
+                
+                // Re-render based on active tab
+                const activeTab = document.querySelector('.nav-item.active');
+                if (activeTab) {
+                    const tabId = activeTab.id.replace('nav-', '');
+                    switchTab(tabId);
+                }
+            }
+        }
+
+        if (localStorage.getItem('dra_isa_logged_in') === 'true') {
+            showDashboard();
+            fetchAllData();
+        }
 
         // Responsive Sidebar Toggle
         const openSidebarBtn = document.getElementById('openSidebar');
@@ -569,21 +701,128 @@
         if (openSidebarBtn) openSidebarBtn.addEventListener('click', toggleSidebar);
         if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', toggleSidebar);
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', toggleSidebar);
+ 
+        // Simple function to toggle installments
+        function toggleInstallmentField(val) {
+            const container = document.getElementById('installmentContainer');
+            if (val === 'Parcelado') {
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+ 
+        // Edit Client
+        function editClient(id) {
+            const client = clients.find(c => c.id == id);
+            if (!client) return;
+ 
+            document.getElementById('editingClientId').value = client.id;
+            document.getElementById('clientName').value = client.name;
+            document.getElementById('clientDoc').value = client.doc;
+            document.getElementById('clientRg').value = client.rg || '';
+            document.getElementById('clientEmail').value = client.email;
+            document.getElementById('clientPhone').value = client.phone;
+            document.getElementById('clientArea').value = client.area;
+            document.getElementById('clientProcess').value = client.process === 'Não informado' ? '' : client.process;
+            document.getElementById('clientValue').value = client.value;
+            document.getElementById('clientPaymentMethod').value = client.pay_method;
+            document.getElementById('clientPaymentType').value = client.pay_type;
+            
+            if (client.pay_type === 'Parcelado') {
+                document.getElementById('installmentContainer').classList.remove('hidden');
+                document.getElementById('clientInstallmentPercent').value = client.install_percent;
+            } else {
+                document.getElementById('installmentContainer').classList.add('hidden');
+            }
+ 
+            document.getElementById('clientNotes').value = client.notes || '';
+            
+            // Change modal title and button
+            document.querySelector('#clienteModal h2').innerText = 'Editar Cliente';
+            document.querySelector('#addClientForm button[type="submit"]').innerText = 'Salvar Alterações';
+            
+            openModal('clienteModal');
+        }
+ 
+        // View Client
+        function viewClient(id) {
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+ 
+            const detail = document.getElementById('viewClienteDetail');
+            detail.innerHTML = `
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Nome Completo</h4>
+                        <p class="text-green font-bold serif text-lg">${client.name}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">CPF/CNPJ</h4>
+                        <p class="text-gray-600 font-semibold">${client.doc}</p>
+                    </div>
+                    ${client.rg ? `<div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">RG</h4>
+                        <p class="text-gray-600 font-semibold">${client.rg}</p>
+                    </div>` : ''}
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">E-mail</h4>
+                        <p class="text-gray-600 font-semibold">${client.email || '-'}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Telefone</h4>
+                        <p class="text-gray-600 font-semibold">${client.phone || '-'}</p>
+                    </div>
+                    <div class="col-span-2 h-px bg-gray-100 my-2"></div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Área de Atuação</h4>
+                        <p class="text-green font-bold">${client.area}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Nº do Processo</h4>
+                        <p class="text-gray-600 font-semibold">${client.process}</p>
+                    </div>
+                    <div class="col-span-2 h-px bg-gray-100 my-2"></div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Valor do Contrato</h4>
+                        <p class="text-green font-bold text-lg">R$ ${client.value}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Forma de Pagto</h4>
+                        <p class="text-gray-600 font-semibold">${client.pay_method}</p>
+                    </div>
+                    <div>
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Tipo / Parcelamento</h4>
+                        <p class="text-gray-600 font-semibold">${client.pay_type} ${client.install_percent ? '(' + client.install_percent + ')' : ''}</p>
+                    </div>
+                    <div class="col-span-2 h-px bg-gray-100 my-2"></div>
+                    <div class="col-span-2">
+                        <h4 class="text-[10px] uppercase font-bold text-gold tracking-widest mb-1">Observações</h4>
+                        <p class="text-gray-600 text-sm italic py-4 px-4 bg-gray-50 border-l-4 border-gold rounded-sm">${client.notes || 'Nenhuma observação.'}</p>
+                    </div>
+                </div>
+            `;
+            
+            openModal('viewClienteModal');
+            lucide.createIcons();
+        }
 
         // TODO Form logic
         const todoForm = document.getElementById('todoForm');
-        todoForm.addEventListener('submit', (e) => {
+        todoForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const input = document.getElementById('todoInput');
             const newTodo = {
-                id: Date.now(),
                 text: input.value,
                 completed: false
             };
-            todos.unshift(newTodo);
-            localStorage.setItem('dra_isa_todos', JSON.stringify(todos));
-            input.value = '';
-            renderTodos();
+            
+            const { data, error } = await window.supabaseClient.from('todos').insert([newTodo]).select();
+            if (!error && data) {
+                todos.unshift(data[0]);
+                input.value = '';
+                renderTodos();
+            }
         });
 
         function renderTodos() {
@@ -612,16 +851,24 @@
             }
         }
 
-        function toggleTodo(id) {
-            todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-            localStorage.setItem('dra_isa_todos', JSON.stringify(todos));
-            renderTodos();
+        async function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+            const nuevoEstado = !todo.completed;
+            
+            const { error } = await window.supabaseClient.from('todos').update({ completed: nuevoEstado }).eq('id', id);
+            if (!error) {
+                todos = todos.map(t => t.id === id ? { ...t, completed: nuevoEstado } : t);
+                renderTodos();
+            }
         }
 
-        function deleteTodo(id) {
-            todos = todos.filter(t => t.id !== id);
-            localStorage.setItem('dra_isa_todos', JSON.stringify(todos));
-            renderTodos();
+        async function deleteTodo(id) {
+            const { error } = await window.supabaseClient.from('todos').delete().eq('id', id);
+            if (!error) {
+                todos = todos.filter(t => t.id !== id);
+                renderTodos();
+            }
         }
 
         loginForm.addEventListener('submit', (e) => {
@@ -637,40 +884,69 @@
             }
         });
 
-        addClientForm.addEventListener('submit', (e) => {
+        addClientForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newClient = {
-                id: Date.now(),
-                name: document.getElementById('clientName').value,
+            const payType = document.getElementById('clientPaymentType').value;
+            const editingId = document.getElementById('editingClientId').value;
+            
+            const clientData = {
+                name: document.getElementById('clientName').value || 'Não informado',
                 doc: document.getElementById('clientDoc').value,
+                rg: document.getElementById('clientRg').value || '',
                 email: document.getElementById('clientEmail').value,
                 phone: document.getElementById('clientPhone').value,
                 area: document.getElementById('clientArea').value,
                 process: document.getElementById('clientProcess').value || 'Não informado',
+                value: document.getElementById('clientValue').value || '0,00',
+                pay_method: document.getElementById('clientPaymentMethod').value,
+                pay_type: payType,
+                install_percent: payType === 'Parcelado' ? document.getElementById('clientInstallmentPercent').value : null,
+                notes: document.getElementById('clientNotes').value,
                 status: 'Ativo'
             };
-            clients.push(newClient);
-            localStorage.setItem('dra_isa_clients', JSON.stringify(clients));
+ 
+            if (editingId) {
+                // Update existing
+                const { error } = await window.supabaseClient.from('clients').update(clientData).eq('id', editingId);
+                if (!error) {
+                    clients = clients.map(c => c.id == editingId ? { ...c, ...clientData } : c);
+                }
+            } else {
+                // Add new
+                const { data, error } = await window.supabaseClient.from('clients').insert([clientData]).select();
+                if (!error && data) {
+                    clients.push(data[0]);
+                }
+            }
+ 
             renderClients();
             closeModal('clienteModal');
             addClientForm.reset();
+            document.getElementById('editingClientId').value = '';
+            document.getElementById('installmentContainer').classList.add('hidden');
+            
+            // Reset modal title
+            document.querySelector('#clienteModal h2').innerText = 'Novo Cliente';
+            document.querySelector('#addClientForm button[type="submit"]').innerText = 'Cadastrar Cliente';
         });
 
-        addTaskForm.addEventListener('submit', (e) => {
+        addTaskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const newTask = {
-                id: Date.now(),
-                desc: document.getElementById('taskDesc').value,
+            const newTaskData = {
+                description: document.getElementById('taskDesc').value,
                 date: document.getElementById('taskDate').value,
                 time: document.getElementById('taskTime').value,
                 location: document.getElementById('taskLocation').value || 'Não informado'
             };
-            tasks.push(newTask);
-            localStorage.setItem('dra_isa_tasks', JSON.stringify(tasks));
-            renderCalendar();
-            renderTodayTasks(newTask.date);
-            closeModal('taskModal');
-            addTaskForm.reset();
+            
+            const { data, error } = await window.supabaseClient.from('tasks').insert([newTaskData]).select();
+            if (!error && data) {
+                tasks.push(data[0]);
+                renderCalendar();
+                renderTodayTasks(newTaskData.date);
+                closeModal('taskModal');
+                addTaskForm.reset();
+            }
         });
 
         function renderClients() {
@@ -688,15 +964,42 @@
                         <td class="px-6 py-4 font-semibold text-green">${client.name}</td>
                         <td class="px-6 py-4 text-xs text-gray-500">${client.doc}</td>
                         <td class="px-6 py-4 text-xs font-bold text-green">${client.area}<br><span class="text-gray-400 font-normal">${client.process}</span></td>
+                        <td class="px-6 py-4 text-xs">
+                            <span class="font-bold text-green">R$ ${client.value}</span><br>
+                            <span class="text-[9px] uppercase text-gray-400">${client.pay_type} ${client.install_percent ? '(' + client.install_percent + ')' : ''}</span>
+                        </td>
                         <td class="px-6 py-4"><span class="px-2 py-1 bg-green/10 text-green text-[10px] font-bold uppercase">Ativo</span></td>
-                        <td class="px-6 py-4"><button onclick="deleteClient(${client.id})" class="text-gray-400 hover:text-red-500"><i data-lucide="trash-2" size="16"></i></button></td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1">
+                                <button onclick="viewClient(${client.id})" class="btn-action btn-view" title="Visualizar">
+                                    <i data-lucide="eye" size="12"></i>
+                                </button>
+                                <button onclick="editClient(${client.id})" class="btn-action btn-edit" title="Editar">
+                                    <i data-lucide="edit-3" size="12"></i>
+                                </button>
+                                <button onclick="downloadContract(${client.id})" class="btn-action" title="Baixar Contrato" style="color:#94a3b8" onmouseenter="this.style.backgroundColor='#f0fdf4';this.style.color='#164233'" onmouseleave="this.style.backgroundColor='transparent';this.style.color='#94a3b8'">
+                                    <i data-lucide="file-text" size="12"></i>
+                                </button>
+                                <button onclick="deleteClient(${client.id})" class="btn-action btn-delete" title="Excluir">
+                                    <i data-lucide="trash-2" size="12"></i>
+                                </button>
+                            </div>
+                        </td>
                     </tr>
                 `).join('');
                 lucide.createIcons();
             }
         }
 
-        function deleteClient(id) { if (confirm('Excluir cliente?')) { clients = clients.filter(c => c.id !== id); localStorage.setItem('dra_isa_clients', JSON.stringify(clients)); renderClients(); } }
+        async function deleteClient(id) { 
+            if (confirm('Excluir cliente?')) { 
+                const { error } = await window.supabaseClient.from('clients').delete().eq('id', id);
+                if (!error) {
+                    clients = clients.filter(c => c.id !== id); 
+                    renderClients(); 
+                }
+            } 
+        }
 
         function renderCalendar() {
             const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -721,7 +1024,7 @@
                         <div class="mt-2 w-full space-y-1 overflow-hidden flex-1">
                             ${dailyTasks.slice(0, 3).map(t => `
                                 <div class="p-1 bg-green text-white text-[7px] truncate rounded-[2px] font-semibold flex items-center gap-1 shadow-sm">
-                                    <i data-lucide="clock" size="6"></i> ${t.time} ${t.desc}
+                                    <i data-lucide="clock" size="6"></i> ${t.time} ${t.description}
                                 </div>
                             `).join('')}
                             ${dailyTasks.length > 3 ? `<div class="text-[7px] text-green font-bold text-center mt-1 uppercase tracking-tighter">+ ${dailyTasks.length - 3} itens</div>` : ''}
@@ -756,7 +1059,7 @@
                             <i data-lucide="clock" size="18"></i>
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-bold text-green text-lg leading-tight mb-1">${t.desc}</h4>
+                            <h4 class="font-bold text-green text-lg leading-tight mb-1">${t.description}</h4>
                             <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 uppercase tracking-widest font-semibold">
                                 <span class="flex items-center gap-1 text-gold"><i data-lucide="clock" size="12"></i> ${t.time}</span>
                                 <span class="flex items-center gap-1"><i data-lucide="map-pin" size="12"></i> ${t.location}</span>
@@ -783,7 +1086,7 @@
                 <div class="flex items-start gap-3 p-2 bg-white border border-gray-100 rounded-sm">
                     <div class="w-1.5 h-1.5 rounded-full bg-gold mt-1.5"></div>
                     <div class="flex-1">
-                        <p class="text-xs font-bold text-green">${t.desc}</p>
+                        <p class="text-xs font-bold text-green">${t.description}</p>
                         <p class="text-[9px] text-gray-500">${t.time} • ${t.location}</p>
                     </div>
                     <button onclick="deleteTask(${t.id})" class="text-gray-300 hover:text-red-500"><i data-lucide="x" size="12"></i></button>
@@ -791,7 +1094,14 @@
             lucide.createIcons();
         }
 
-        function deleteTask(id) { tasks = tasks.filter(t => t.id !== id); localStorage.setItem('dra_isa_tasks', JSON.stringify(tasks)); renderCalendar(); renderTodayTasks(selectedDateStr); }
+        async function deleteTask(id) { 
+            const { error } = await window.supabaseClient.from('tasks').delete().eq('id', id);
+            if (!error) {
+                tasks = tasks.filter(t => t.id !== id); 
+                renderCalendar(); 
+                renderTodayTasks(selectedDateStr); 
+            }
+        }
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -811,8 +1121,20 @@
             }
         }
 
+        let leads = [];
+        async function fetchLeads() {
+            const { data, error } = await window.supabaseClient.from('leads').select('*').order('created_at', { ascending: false });
+            if (!error) {
+                leads = data || [];
+                renderLeadsUI();
+            }
+        }
+
         function renderLeads() {
-            const leads = JSON.parse(localStorage.getItem('dra_isa_leads') || '[]');
+            fetchLeads();
+        }
+
+        function renderLeadsUI() {
             const list = document.getElementById('leadsList');
             const emptyState = document.getElementById('leadsEmptyState');
             const tableContainer = document.getElementById('leadsTableContainer');
@@ -850,20 +1172,49 @@
             }
         }
 
-        function deleteLead(id) {
+        async function deleteLead(id) {
             if (confirm('Excluir este lead?')) {
-                let leads = JSON.parse(localStorage.getItem('dra_isa_leads') || '[]');
-                leads = leads.filter(l => l.id !== id);
-                localStorage.setItem('dra_isa_leads', JSON.stringify(leads));
-                renderLeads();
+                const { error } = await window.supabaseClient.from('leads').delete().eq('id', id);
+                if (!error) {
+                    leads = leads.filter(l => l.id !== id);
+                    renderLeadsUI();
+                }
             }
         }
 
-        function updateLeadStatus(id, newStatus) {
-            let leads = JSON.parse(localStorage.getItem('dra_isa_leads') || '[]');
-            leads = leads.map(l => l.id === id ? { ...l, status: newStatus } : l);
-            localStorage.setItem('dra_isa_leads', JSON.stringify(leads));
-            renderLeads();
+        async function updateLeadStatus(id, newStatus) {
+            const { error } = await window.supabaseClient.from('leads').update({ status: newStatus }).eq('id', id);
+            if (!error) {
+                // Se o lead foi convertido, criar automaticamente um cliente
+                if (newStatus === 'Convertido') {
+                    const lead = leads.find(l => l.id === id);
+                    if (lead) {
+                        const newClientData = {
+                            name: lead.name,
+                            email: lead.email,
+                            phone: lead.phone,
+                            doc: 'Pendente', // Preencher depois no cadastro
+                            area: 'Direito Previdenciário', // Valor padrão inicial
+                            notes: `Lead convertido do site. Mensagem original: ${lead.message}`,
+                            status: 'Ativo'
+                        };
+
+                        const { error: clientError } = await window.supabaseClient.from('clients').insert([newClientData]);
+                        
+                        if (clientError) {
+                            console.error('Erro ao converter lead em cliente:', clientError);
+                            alert('Lead atualizado, mas houve um erro ao criar o cliente automaticamente.');
+                        } else {
+                            alert('Lead convertido em cliente com sucesso!');
+                            // Recarregar dados para refletir a mudança
+                            fetchAllData();
+                        }
+                    }
+                }
+                
+                leads = leads.map(l => l.id === id ? { ...l, status: newStatus } : l);
+                renderLeadsUI();
+            }
         }
 
         function getStatusStyles(status) {
@@ -887,6 +1238,226 @@
             i.value = v;
         }
         function maskPhone(i) { let v = i.value.replace(/\D/g, ""); v = v.replace(/^(\d{2})(\d)/g, "($1) $2"); v = v.replace(/(\d)(\d{4})$/, "$1-$2"); i.value = v; }
+
+        // ─── CONTRACT GENERATION ───────────────────────────────────────────────
+        const LAWYER_INFO = {
+            name: 'Isabelle Climaco',
+            oab: 'OAB/BA 000.000',
+            office: 'Advocacia Climaco',
+            address: 'Rua Doutor João Nascimento, 365, Centro, Uruçuca - BA',
+            phone: '(73) 9 8129-8102',
+            email: 'isabelleclimacoadv@gmail.com',
+        };
+
+        const CONTRACT_CLAUSES = {
+            'Direito Previdenciário': [
+                { title: 'CLÁUSULA 1ª – DO OBJETO', text: 'O presente instrumento tem por objeto a prestação de serviços advocatícios pelo(a) CONTRATADO(A) ao(à) CONTRATANTE, especificamente relacionados ao Direito Previdenciário, compreendendo: análise das contribuições ao INSS, orientação e acompanhamento de processo administrativo e/ou judicial perante o INSS ou Poder Judiciário, visando à concessão, revisão ou manutenção de benefício previdenciário (aposentadoria, pensão por morte, auxílio-doença, BPC/LOAS, entre outros).' },
+                { title: 'CLÁUSULA 2ª – DAS OBRIGAÇÕES DO(A) CONTRATADO(A)', text: 'O(A) CONTRATADO(A) se compromete a: (i) prestar os serviços com diligência, competência e ética profissional; (ii) manter o(a) CONTRATANTE informado(a) sobre o andamento do caso; (iii) guardar sigilo sobre as informações fornecidas; (iv) elaborar e protocolar todos os documentos necessários para a defesa dos interesses do(a) CONTRATANTE.' },
+                { title: 'CLÁUSULA 3ª – DAS OBRIGAÇÕES DO(A) CONTRATANTE', text: 'O(A) CONTRATANTE se obriga a: (i) fornecer todos os documentos solicitados pelo(a) CONTRATADO(A) dentro do prazo estabelecido; (ii) informar sobre quaisquer mudanças relevantes em sua situação; (iii) efetuar o pagamento dos honorários na forma e prazo pactuados; (iv) comparecer aos atos necessários quando convocado(a).' },
+                { title: 'CLÁUSULA 4ª – DOS HONORÁRIOS', text: 'Pelos serviços prestados, o(a) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor de R$ [VALOR] ([VALOR POR EXTENSO]), na forma de pagamento [FORMA DE PAGAMENTO], conforme [TIPO DE PAGAMENTO]. Em caso de êxito judicial, aplicam-se os honorários sucumbenciais na forma da lei.' },
+                { title: 'CLÁUSULA 5ª – DO PRAZO', text: 'O presente contrato vigorará pelo tempo necessário à conclusão dos serviços ora contratados, não havendo prazo determinado, tendo em vista a natureza do serviço prestado e os procedimentos administrativos e judiciais envolvidos.' },
+                { title: 'CLÁUSULA 6ª – DA RESCISÃO', text: 'O presente contrato poderá ser rescindido por qualquer das partes, mediante comunicação prévia por escrito com antecedência mínima de 15 (quinze) dias, sem prejuízo do pagamento dos honorários relativos aos serviços já prestados até a data da rescisão.' },
+                { title: 'CLÁUSULA 7ª – DO FORO', text: 'As partes elegem o Foro da Comarca de Uruçuca – BA, para dirimir quaisquer dúvidas ou litígios oriundos do presente instrumento, com renúncia a qualquer outro, por mais privilegiado que seja.' },
+            ],
+            'Direito Trabalhista': [
+                { title: 'CLÁUSULA 1ª – DO OBJETO', text: 'O presente instrumento tem por objeto a prestação de serviços advocatícios nas áreas do Direito do Trabalho e Processo do Trabalho, compreendendo: análise da relação de emprego, orientação quanto aos direitos trabalhistas, cálculo de verbas rescisórias, acompanhamento de reclamação trabalhista perante a Justiça do Trabalho e representação do(a) CONTRATANTE em todas as fases processuais.' },
+                { title: 'CLÁUSULA 2ª – DAS OBRIGAÇÕES DO(A) CONTRATADO(A)', text: 'O(A) CONTRATADO(A) se compromete a: (i) analisar os documentos e fatos narrados pelo(a) CONTRATANTE; (ii) elaborar e ajuizar a reclamação trabalhista ou contestar a ação, conforme o caso; (iii) representar o(a) CONTRATANTE em audiências e demais atos processuais; (iv) manter o(a) CONTRATANTE informado(a) sobre o andamento do processo.' },
+                { title: 'CLÁUSULA 3ª – DAS OBRIGAÇÕES DO(A) CONTRATANTE', text: 'O(A) CONTRATANTE se obriga a: (i) fornecer todos os documentos necessários (CTPS, contracheques, cartão ponto, etc.); (ii) comparecer às audiências designadas; (iii) comunicar qualquer acordo extrajudicial que vier a celebrar com o(a) empregador(a); (iv) efetuar o pagamento dos honorários acordados.' },
+                { title: 'CLÁUSULA 4ª – DOS HONORÁRIOS', text: 'Pelos serviços prestados, o(a) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor de R$ [VALOR], na forma de pagamento [FORMA DE PAGAMENTO], conforme [TIPO DE PAGAMENTO]. Em caso de êxito, aplica-se ainda o percentual de honorários advocatícios nos termos do art. 791-A da CLT.' },
+                { title: 'CLÁUSULA 5ª – DA RESCISÃO', text: 'O presente contrato poderá ser rescindido por qualquer das partes, mediante comunicação por escrito, ficando garantidos ao(à) CONTRATADO(A) os honorários proporcionais aos serviços já prestados.' },
+                { title: 'CLÁUSULA 6ª – DO FORO', text: 'As partes elegem o Foro da Comarca de Uruçuca – BA para dirimir quaisquer controvérsias oriundas do presente contrato, com renúncia a qualquer outro.' },
+            ],
+            'Direito Sucessório': [
+                { title: 'CLÁUSULA 1ª – DO OBJETO', text: 'O presente contrato tem por objeto a prestação de serviços jurídicos na área do Direito das Sucessões, abrangendo: orientação sobre o processo de inventário (judicial ou extrajudicial), elaboração de petições e documentos necessários, representação dos herdeiros perante o Poder Judiciário ou Cartório, e acompanhamento da partilha de bens até o seu encerramento.' },
+                { title: 'CLÁUSULA 2ª – DAS OBRIGAÇÕES DO(A) CONTRATADO(A)', text: 'O(A) CONTRATADO(A) compromete-se a: (i) orientar quanto à melhor via para o inventário; (ii) elaborar e protocolar todos os documentos necessários; (iii) representar os herdeiros em todas as fases do inventário; (iv) comunicar ao(à) CONTRATANTE quaisquer eventos relevantes do processo.' },
+                { title: 'CLÁUSULA 3ª – DAS OBRIGAÇÕES DO(A) CONTRATANTE', text: 'O(A) CONTRATANTE compromete-se a: (i) fornecer todos os documentos relativos ao espólio e aos herdeiros; (ii) informar sobre a existência de todos os bens, dívidas e credores; (iii) colaborar para a resolução de eventuais disputas entre herdeiros; (iv) efetuar o pagamento dos honorários pactuados.' },
+                { title: 'CLÁUSULA 4ª – DOS HONORÁRIOS', text: 'Pelos serviços prestados, o(a) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor de R$ [VALOR], na forma de pagamento [FORMA DE PAGAMENTO], conforme [TIPO DE PAGAMENTO]. Os honorários são fixos, não se confundindo com custas judiciais, taxas cartorárias e ITCMD, que são de responsabilidade do(a) CONTRATANTE.' },
+                { title: 'CLÁUSULA 5ª – DO PRAZO', text: 'O prazo de vigência do contrato é indeterminado, encerrando-se com a conclusão do inventário e partilha de bens, e o trânsito em julgado, quando aplicável.' },
+                { title: 'CLÁUSULA 6ª – DO FORO', text: 'Para dirimir quaisquer controvérsias, fica eleito o Foro da Comarca de Uruçuca – BA, com exclusão de qualquer outro.' },
+            ],
+            'Direito de Família': [
+                { title: 'CLÁUSULA 1ª – DO OBJETO', text: 'O presente instrumento tem por objeto a prestação de serviços advocatícios na área do Direito de Família, podendo abranger: ação de divórcio, dissolução de união estável, guarda de menores, regulamentação de visitas, fixação ou revisão de alimentos, adoção, reconhecimento de paternidade e demais ações inerentes ao Direito de Família.' },
+                { title: 'CLÁUSULA 2ª – DAS OBRIGAÇÕES DO(A) CONTRATADO(A)', text: 'O(A) CONTRATADO(A) se compromete a: (i) prestar os serviços com ética, sigilo e zelo profissional; (ii) buscar soluções consensuais sempre que possível e benéfico ao(à) CONTRATANTE; (iii) representar o(a) CONTRATANTE em todas as fases do processo; (iv) zelar pelo bem-estar e pela preservação dos interesses dos menores envolvidos, quando for o caso.' },
+                { title: 'CLÁUSULA 3ª – DAS OBRIGAÇÕES DO(A) CONTRATANTE', text: 'O(A) CONTRATANTE se obriga a: (i) fornecer documentos e informações com veracidade; (ii) comparecer aos atos judiciais e extrajudiciais mediante convocação; (iii) comunicar ao(à) CONTRATADO(A) qualquer acordo ou tratativa direta com a parte contrária; (iv) cumprir com os pagamentos pactuados.' },
+                { title: 'CLÁUSULA 4ª – DOS HONORÁRIOS', text: 'Pelos serviços prestados, o(a) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor de R$ [VALOR], na forma de pagamento [FORMA DE PAGAMENTO], conforme [TIPO DE PAGAMENTO]. Os honorários são devidos independentemente do resultado da ação, salvo disposição em contrário expressamente acordada pelas partes.' },
+                { title: 'CLÁUSULA 5ª – DA CONFIDENCIALIDADE', text: 'Todas as informações e documentos compartilhados pelas partes no âmbito deste contrato são estritamente confidenciais, sendo vedado ao(à) CONTRATADO(A) divulgá-los a terceiros, salvo autorização expressa do(a) CONTRATANTE ou determinação legal.' },
+                { title: 'CLÁUSULA 6ª – DO FORO', text: 'As partes elegem o Foro da Comarca de Uruçuca – BA, para dirimir controvérsias oriundas do presente contrato.' },
+            ],
+            'Direito do Consumidor': [
+                { title: 'CLÁUSULA 1ª – DO OBJETO', text: 'O presente instrumento tem por objeto a prestação de serviços advocatícios nas áreas do Direito do Consumidor e Responsabilidade Civil, compreendendo: análise da relação de consumo, elaboração e ajuizamento de ação judicial ou acompanhamento de processo administrativo junto a órgãos de defesa do consumidor (PROCON, SENACON), visando reparação de danos materiais e/ou morais, substituição de produto, cancelamento de contrato ou cobrança indevida.' },
+                { title: 'CLÁUSULA 2ª – DAS OBRIGAÇÕES DO(A) CONTRATADO(A)', text: 'O(A) CONTRATADO(A) se compromete a: (i) analisar os fatos e documentos relacionados à relação de consumo; (ii) orientar sobre os direitos do(a) CONTRATANTE previstos no CDC; (iii) propor as medidas judiciais e/ou extrajudiciais cabíveis; (iv) representar o(a) CONTRATANTE em todas as instâncias necessárias.' },
+                { title: 'CLÁUSULA 3ª – DAS OBRIGAÇÕES DO(A) CONTRATANTE', text: 'O(A) CONTRATANTE se obriga a: (i) apresentar todos os comprovantes, notas fiscais, contratos e demais documentos que embasem a demanda; (ii) manter seus dados de contato atualizados; (iii) informar sobre qualquer acordo ou pagamento recebido da parte contrária; (iv) efetuar os pagamentos acordados.' },
+                { title: 'CLÁUSULA 4ª – DOS HONORÁRIOS', text: 'Pelos serviços prestados, o(a) CONTRATANTE pagará ao(à) CONTRATADO(A) o valor de R$ [VALOR], na forma de pagamento [FORMA DE PAGAMENTO], conforme [TIPO DE PAGAMENTO]. Em caso de êxito com condenação do fornecedor ao pagamento de honorários sucumbenciais, estes reverterão integralmente ao(à) CONTRATADO(A).' },
+                { title: 'CLÁUSULA 5ª – DA RESCISÃO', text: 'O presente contrato poderá ser rescindido por qualquer das partes, mediante aviso prévio por escrito, ficando o(a) CONTRATANTE responsável pelo pagamento dos serviços já prestados até a data da rescisão.' },
+                { title: 'CLÁUSULA 6ª – DO FORO', text: 'Para dirimir quaisquer dúvidas ou litígios, as partes elegem o Foro da Comarca de Uruçuca – BA, com renúncia a qualquer outro.' },
+            ],
+        };
+
+        async function downloadContract(id) {
+            // Check if docx loaded
+            if (typeof docx === 'undefined') {
+                alert('A biblioteca de documentos está carregando. Aguarde alguns segundos e tente novamente.');
+                return;
+            }
+
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+
+            try {
+                const { Document, Packer, Paragraph, TextRun, AlignmentType,
+                        ImageRun, BorderStyle, convertInchesToTwip } = docx;
+
+                const clauses = CONTRACT_CLAUSES[client.area] || [];
+                const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+                // Load logo preserving aspect ratio
+                let logoImageRun = null;
+                try {
+                    const res = await fetch('logo.png');
+                    const buf = await res.arrayBuffer();
+
+                    // Get real image dimensions to preserve aspect ratio
+                    const blob2 = new Blob([buf], { type: 'image/png' });
+                    const blobUrl = URL.createObjectURL(blob2);
+                    const dimensions = await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+                        img.onerror = () => resolve(null);
+                        img.src = blobUrl;
+                    });
+                    URL.revokeObjectURL(blobUrl);
+
+                    let logoW = 160, logoH = 60;
+                    if (dimensions) {
+                        const maxW = 160;
+                        const ratio = dimensions.h / dimensions.w;
+                        logoW = maxW;
+                        logoH = Math.round(maxW * ratio);
+                    }
+
+                    logoImageRun = new ImageRun({
+                        data: buf,
+                        transformation: { width: logoW, height: logoH },
+                    });
+                } catch(e) { /* logo optional */ }
+
+                const makeHeading = (text) => new Paragraph({
+                    children: [new TextRun({ text, bold: true, size: 22, color: '164233', font: 'Calibri' })],
+                    spacing: { before: 300, after: 100 },
+                    alignment: AlignmentType.LEFT,
+                });
+
+                const makeBody = (text) => new Paragraph({
+                    children: [new TextRun({ text, size: 20, font: 'Calibri' })],
+                    spacing: { after: 160 },
+                    alignment: AlignmentType.JUSTIFIED,
+                });
+
+                const makeLine = () => new Paragraph({
+                    children: [new TextRun({ text: '', size: 20 })],
+                    spacing: { after: 80 },
+                    border: { bottom: { color: 'D4B064', size: 4, style: BorderStyle.SINGLE } },
+                });
+
+                const clauseParagraphs = clauses.flatMap(c => [
+                    new Paragraph({
+                        children: [new TextRun({ text: c.title, bold: true, size: 20, color: '164233', font: 'Calibri' })],
+                        spacing: { before: 220, after: 80 },
+                    }),
+                    makeBody(c.text.replace('[VALOR]', client.value).replace('[FORMA DE PAGAMENTO]', client.pay_method).replace('[TIPO DE PAGAMENTO]', client.pay_type)),
+                ]);
+
+                const doc = new Document({
+                    sections: [{
+                        properties: {
+                            page: {
+                                margin: {
+                                    top: 1728, bottom: 1728, left: 1728, right: 1728
+                                }
+                            },
+                        },
+                        children: [
+                            ...(logoImageRun ? [
+                                new Paragraph({ children: [logoImageRun], alignment: AlignmentType.CENTER, spacing: { after: 80 } }),
+                            ] : []),
+
+                            makeLine(),
+
+                            new Paragraph({
+                                children: [new TextRun({ text: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS ADVOCATÍCIOS', bold: true, size: 24, color: '164233', font: 'Calibri', allCaps: true })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { before: 200, after: 60 },
+                            }),
+                            new Paragraph({
+                                children: [new TextRun({ text: `ÁREA: ${client.area.toUpperCase()}`, size: 20, color: 'D4B064', font: 'Calibri', bold: true })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 320 },
+                            }),
+
+                            makeHeading('DAS PARTES'),
+                            makeBody(`CONTRATANTE: ${client.name}, portador(a) do CPF/CNPJ nº ${client.doc}${client.rg ? ', RG nº ' + client.rg : ''}, doravante denominado(a) simplesmente CONTRATANTE.`),
+                            makeBody(`CONTRATADO(A): ${LAWYER_INFO.name}, inscrito(a) na ${LAWYER_INFO.oab}, com escritório na ${LAWYER_INFO.address}, telefone ${LAWYER_INFO.phone}, e-mail ${LAWYER_INFO.email}, doravante denominado(a) CONTRATADO(A).`),
+
+                            makeHeading('DOS HONORÁRIOS ACORDADOS'),
+                            makeBody(`Valor total contratado: R$ ${client.value}`),
+                            makeBody(`Forma de pagamento: ${client.pay_method}`),
+                            makeBody(`Tipo de pagamento: ${client.pay_type}${client.install_percent ? ' – Entrada de ' + client.install_percent : ''}`),
+
+                            makeHeading('DAS CLÁUSULAS E CONDIÇÕES'),
+                            ...clauseParagraphs,
+
+                            makeHeading('CLÁUSULA FINAL – DAS DISPOSIÇÕES GERAIS'),
+                            makeBody('E, por estarem assim justos e contratados, as partes assinam o presente instrumento em 02 (duas) vias de igual teor e forma, na presença de 02 (duas) testemunhas.'),
+                            makeBody(`Uruçuca – BA, ${today}.`),
+
+                            new Paragraph({ children: [new TextRun({ text: '', size: 20 })], spacing: { before: 600, after: 0 } }),
+
+                            new Paragraph({
+                                children: [new TextRun({ text: '________________________________________', size: 20, font: 'Calibri' })],
+                                spacing: { before: 0, after: 60 },
+                            }),
+                            new Paragraph({
+                                children: [new TextRun({ text: `CONTRATANTE: ${client.name}`, bold: true, size: 20, font: 'Calibri', color: '164233' })],
+                                spacing: { after: 480 },
+                            }),
+
+                            new Paragraph({
+                                children: [new TextRun({ text: '________________________________________', size: 20, font: 'Calibri' })],
+                                spacing: { before: 0, after: 60 },
+                            }),
+                            new Paragraph({
+                                children: [new TextRun({ text: `CONTRATADO(A): ${LAWYER_INFO.name} – ${LAWYER_INFO.oab}`, bold: true, size: 20, font: 'Calibri', color: '164233' })],
+                                spacing: { after: 480 },
+                            }),
+
+                            makeHeading('TESTEMUNHAS:'),
+                            new Paragraph({
+                                children: [new TextRun({ text: '1. ________________________________________ CPF: ____________________', size: 20, font: 'Calibri' })],
+                                spacing: { after: 200 },
+                            }),
+                            new Paragraph({
+                                children: [new TextRun({ text: '2. ________________________________________ CPF: ____________________', size: 20, font: 'Calibri' })],
+                                spacing: { after: 200 },
+                            }),
+                        ],
+                    }],
+                });
+
+                const blob = await Packer.toBlob(doc);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Contrato_${client.name.replace(/\s+/g, '_')}_${client.area.replace(/\s+/g, '_')}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch (err) {
+                console.error('Erro ao gerar contrato:', err);
+                alert('Ocorreu um erro ao gerar o contrato: ' + err.message);
+            }
+        }
     </script>
 </body>
 
